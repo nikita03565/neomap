@@ -1,5 +1,5 @@
 import React from 'react'
-import { RENDERING_CLUSTERS, RENDERING_HEATMAP, RENDERING_MARKERS, RENDERING_POLYLINE } from "./constants";
+import { RENDERING_CLUSTERS, RENDERING_HEATMAP, RENDERING_MARKERS, RENDERING_POLYLINE, RENDERING_RELATIONS } from "./constants";
 import L from 'leaflet';
 import 'leaflet.heat';
 import 'leaflet.markercluster';
@@ -51,7 +51,7 @@ export const Map = React.memo(({layers}) => {
 			const currentMapOverlays  = mapOverlaysRef.current;
 
 			layers.forEach((layer) => {
-				const {name, bounds, rendering, data, radius, color } = layer;
+				const {name, bounds, rendering, data, radius, color, relationshipData, relationshipColor } = layer;
 
 				const layerBounds = new L.LatLngBounds(bounds);
 
@@ -60,38 +60,67 @@ export const Map = React.memo(({layers}) => {
 				}
 
 				const rgbColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+				const relRgbColor = `rgb(${relationshipColor.r}, ${relationshipColor.g}, ${relationshipColor.b})`;
+				console.log(currentMapOverlays)
+				function renderMarkers() {
+					let markerLayer = currentMapOverlays[name];
+
+					if (!markerLayer) {
+						markerLayer = L.layerGroup().addTo(map);
+					}
+
+					// TODO: check if the layer has changed before rerendering it
+					markerLayer.clearLayers();
+
+					data.forEach(entry => {
+						const m = L.circleMarker(
+							entry.pos,
+							{
+								title: entry.tooltip,
+								fill: true,
+								radius: 5,
+								color: rgbColor,
+								fillColor: rgbColor,
+								opacity: color.a,
+								fillOpacity: color.a
+							}
+						).addTo(markerLayer);
+
+						if (entry.tooltip !== undefined) {
+							m.bindPopup(entry.tooltip);
+						}
+					});
+
+					newMapOverlays[name] = markerLayer;
+				}
 
 				switch(rendering) {
 					case RENDERING_MARKERS:
-						let markerLayer = currentMapOverlays[name];
+						renderMarkers()
 
-						if (!markerLayer) {
-							markerLayer = L.layerGroup().addTo(map);
+						break;
+					
+					case RENDERING_RELATIONS:
+						renderMarkers()
+						let relationsLayer = currentMapOverlays[name];
+
+						if (!relationsLayer) {
+							relationsLayer = L.layerGroup().addTo(map);
 						}
 
 						// TODO: check if the layer has changed before rerendering it
-						markerLayer.clearLayers();
+						relationsLayer.clearLayers();
+						console.log("DATA", relationshipData)
 
-						data.forEach(entry => {
-							const m = L.circleMarker(
-								entry.pos,
-								{
-									title: entry.tooltip,
-									fill: true,
-									radius: 5,
-									color: rgbColor,
-									fillColor: rgbColor,
-									opacity: color.a,
-									fillOpacity: color.a
-								}
-							).addTo(markerLayer);
+						relationshipData.forEach(entry => {
+							const m = L.polyline([entry.start, entry.end], {color: relRgbColor}).addTo(relationsLayer);
 
-							if (entry.tooltip !== undefined) {
+							if (entry.tooltip != null) {
 								m.bindPopup(entry.tooltip);
 							}
 						});
 
-						newMapOverlays[name] = markerLayer;
+						newMapOverlays[name] = relationsLayer;
 
 						break;
 
@@ -163,7 +192,7 @@ export const Map = React.memo(({layers}) => {
 						break;
 				}
 			});
-
+			
 			// Remove deleted layers from the map and the layer control
 			try {
 				for (const [name, overlay] of Object.entries(currentMapOverlays)) {
