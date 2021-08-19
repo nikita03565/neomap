@@ -61,10 +61,10 @@ export const Map = React.memo(({layers}) => {
 
 				const rgbColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
 				const relRgbColor = `rgb(${relationshipColor.r}, ${relationshipColor.g}, ${relationshipColor.b})`;
-				console.log(currentMapOverlays)
-				function renderMarkers() {
-					let markerLayer = currentMapOverlays[name];
-
+				console.log('overlays out', currentMapOverlays)
+				function renderMarkers(layer=null) {
+					let markerLayer = layer || currentMapOverlays[name];
+					
 					if (!markerLayer) {
 						markerLayer = L.layerGroup().addTo(map);
 					}
@@ -78,7 +78,7 @@ export const Map = React.memo(({layers}) => {
 							{
 								title: entry.tooltip,
 								fill: true,
-								radius: 5,
+								radius: 3,
 								color: rgbColor,
 								fillColor: rgbColor,
 								opacity: color.a,
@@ -101,7 +101,6 @@ export const Map = React.memo(({layers}) => {
 						break;
 					
 					case RENDERING_RELATIONS:
-						renderMarkers()
 						let relationsLayer = currentMapOverlays[name];
 
 						if (!relationsLayer) {
@@ -113,7 +112,7 @@ export const Map = React.memo(({layers}) => {
 						console.log("DATA", relationshipData)
 
 						relationshipData.forEach(entry => {
-							const m = L.polyline([entry.start, entry.end], {color: relRgbColor}).addTo(relationsLayer);
+							const m = L.polyline([entry.start, entry.end], {color: relRgbColor, opacity: relationshipColor.a}).addTo(relationsLayer);
 
 							if (entry.tooltip != null) {
 								m.bindPopup(entry.tooltip);
@@ -121,7 +120,7 @@ export const Map = React.memo(({layers}) => {
 						});
 
 						newMapOverlays[name] = relationsLayer;
-
+						renderMarkers(relationsLayer)
 						break;
 
 					case RENDERING_POLYLINE:
