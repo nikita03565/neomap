@@ -7,17 +7,17 @@ import Select from "react-select";
 import Accordion from "react-bootstrap/Accordion";
 import Card from "react-bootstrap/Card";
 import { Button, Form } from "react-bootstrap";
-import { CypherEditor } from "graph-app-kit/components/Editor";
+// import { CypherEditor } from "graph-app-kit/components/Editor";
 import { confirmAlert } from "react-confirm-alert"; // Import
 import { neo4jService } from "../services/neo4jService";
 import { ColorPicker } from "./ColorPicker";
 
 import "react-confirm-alert/src/react-confirm-alert.css"; // Import css
 // css needed for CypherEditor
-import "codemirror/lib/codemirror.css";
-import "codemirror/addon/lint/lint.css";
-import "codemirror/addon/hint/show-hint.css";
-import "cypher-codemirror/dist/cypher-codemirror-syntax.css";
+// import "codemirror/lib/codemirror.css";
+// import "codemirror/addon/lint/lint.css";
+// import "codemirror/addon/hint/show-hint.css";
+// import "cypher-codemirror/dist/cypher-codemirror-syntax.css";
 import { getMinMaxLatLongs } from "./utils";
 import {
   LAYER_TYPE_LATLON,
@@ -252,12 +252,12 @@ export class Layer extends Component {
     query += this.getNodeFilter();
     // filter out nodes with null latitude or longitude
     if (layerType === LAYER_TYPE_LATLON) {
-      query += `\nAND exists(n.${latValue}) AND exists(n.${lonValue})`;
+      query += `\nAND n.${latValue} IS NOT NULL AND n.${lonValue} IS NOT NULL`;
       query += this.getNodesBoundsFilter();
       // return latitude, longitude
       query += `\nRETURN n.${latValue} as latitude, n.${lonValue} as longitude`;
     } else if (layerType === LAYER_TYPE_POINT) {
-      query += `\nAND exists(n.${pointValue})`;
+      query += `\nAND n.${pointValue} IS NOT NULL`;
       // return latitude, longitude
       query += `\nRETURN n.${pointValue}.y as latitude, n.${pointValue}.x as longitude`;
     }
@@ -298,7 +298,7 @@ export class Layer extends Component {
     query += this.getRelationshipsFilter();
 
     // filter out nodes with null latitude or longitude
-    query += `\nAND exists(n.${latValue}) AND exists(n.${lonValue}) AND exists(m.${latValue}) AND exists(m.${lonValue})`;
+    query += `\nAND n.${latValue} IS NOT NULL AND n.${lonValue} IS NOT NULL AND m.${latValue} IS NOT NULL AND m.${lonValue} IS NOT NULL`;
     query += this.getRelationshipsBoundsFilter();
     // return latitude, longitude
     query += `\nRETURN n.${latValue} as start_latitude, n.${lonValue} as start_longitude, m.${latValue} as end_latitude, m.${lonValue} as end_longitude`;
@@ -580,7 +580,7 @@ export class Layer extends Component {
             Be careful, the browser can only display a limited number of nodes (less than a few 10000)
           </p>
         </Form.Text>
-        <CypherEditor value={this.state.cypher} onValueChange={this.handleCypherChange} name="cypher" />
+        {/* <CypherEditor value={this.state.cypher} onValueChange={this.handleCypherChange} name="cypher" /> */}
       </Form.Group>
     );
   }
